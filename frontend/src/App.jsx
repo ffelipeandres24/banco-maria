@@ -32,9 +32,9 @@ function App() {
   const cargarTodo = async () => {
     try {
       const [resC, resCob, resCar] = await Promise.all([
-        axios.get('http://localhost:3000/api/clientes'),
-        axios.get('http://localhost:3000/api/cobros-hoy'),
-        axios.get('http://localhost:3000/api/cartera')
+        axios.get('https://banco-maria.onrender.com/api/clientes'),
+        axios.get('https://banco-maria.onrender.com/api/cobros-hoy'),
+        axios.get('https://banco-maria.onrender.com/api/cartera')
       ]);
       setClientes(resC.data);
       setCobrosHoy(resCob.data);
@@ -44,7 +44,7 @@ function App() {
 
   const verHistorial = async (id) => {
     try {
-      const res = await axios.get(`http://localhost:3000/api/historial/${id}`);
+      const res = await axios.get(`https://banco-maria.onrender.com/api/historial/${id}`);
       setHistorial(res.data);
       setClienteExpandido(id === clienteExpandido ? null : id);
     } catch (e) { alert("Error al cargar historial"); }
@@ -55,9 +55,9 @@ function App() {
     e.preventDefault();
     try {
       if (editandoCli) {
-        await axios.put(`http://localhost:3000/api/clientes/${editandoCli.id}`, nuevoCli);
+        await axios.put(`https://banco-maria.onrender.com/api/clientes/${editandoCli.id}`, nuevoCli);
       } else {
-        await axios.post('http://localhost:3000/api/clientes', nuevoCli);
+        await axios.post('https://banco-maria.onrender.com/api/clientes', nuevoCli);
       }
       alert("¡Operación exitosa!");
       setNuevoCli({ nombre: '', cedula: '', telefono: '' });
@@ -70,7 +70,7 @@ function App() {
   const eliminarCliente = async (id) => {
     if (window.confirm("¿Seguro? Se borrará el historial solo si no tiene préstamos activos.")) {
       try {
-        await axios.delete(`http://localhost:3000/api/clientes/${id}`);
+        await axios.delete(`https://banco-maria.onrender.com/api/clientes/${id}`);
         cargarTodo();
       } catch (e) { alert(e.response.data.error); }
     }
@@ -80,7 +80,7 @@ function App() {
   const guardarPrestamo = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:3000/api/prestamos', formData);
+      await axios.post('https://banco-maria.onrender.com/api/prestamos', formData);
       alert("¡Préstamo desembolsado!");
       setMostrarFormPrestamo(false);
       cargarTodo();
@@ -90,7 +90,7 @@ function App() {
   const confirmarPago = async (id, nombre) => {
     if (window.confirm(`¿Confirmar pago de ${nombre}?`)) {
       try {
-        await axios.put(`http://localhost:3000/api/pagar-cuota/${id}`);
+        await axios.put(`https://banco-maria.onrender.com/api/pagar-cuota/${id}`);
         cargarTodo();
       } catch (e) { alert("Error al registrar pago"); }
     }

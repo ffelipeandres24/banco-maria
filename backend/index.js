@@ -4,7 +4,9 @@ const prestamoRoutes = require('./routes/prestamoRoutes');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: '*' 
+}));
 app.use(express.json()); // Para poder recibir datos JSON
 
 // Rutas
