@@ -144,40 +144,26 @@ function App() {
     }
   };
 
- // --- ACCIONES PRÉSTAMOS CON CONFIRMACIÓN ---
-const guardarPrestamo = async (e) => {
-  e.preventDefault();
+ const guardarPrestamo = async (e) => {
+    e.preventDefault();
 
-  // 1. Calculamos los valores para mostrar en la alerta
-  const interes = formData.monto_prestado * 0.20;
-  const total = Number(formData.monto_prestado) + interes;
-  const clienteNombre = clientes.find(c => c.id == formData.cliente_id)?.nombre || "el cliente";
-
-  // 2. Creamos el mensaje de confirmación
-  const mensajeConfirmacion = `
-    ¿CONFIRMAS ESTE PRÉSTAMO?
-    ---------------------------
-    Cliente: ${clienteNombre}
-    Monto: $${Number(formData.monto_prestado).toLocaleString()}
-    Total con intereses: $${total.toLocaleString()}
-    Cuotas: ${formData.cuotas_totales}
-  `;
-
-  // 3. Mostramos la alerta de SI/NO
-  if (window.confirm(mensajeConfirmacion)) {
-    try {
-      await axios.post(`${API_URL}/prestamos`, formData);
-      alert("¡Préstamo desembolsado con éxito!");
-      setMostrarFormPrestamo(false);
-      cargarTodo(); // Recargamos para que aparezca en cartera y cobros
-    } catch (e) {
-      alert("Error al registrar: " + (e.response?.data?.error || "Intenta de nuevo"));
+    // Esta es la alerta que pediste
+    const confirmar = window.confirm("¿Seguro que quieres hacer el préstamo?");
+    
+    if (confirmar) {
+      try {
+        await axios.post('https://banco-maria.onrender.com/api/prestamos', formData);
+        alert("¡Préstamo desembolsado!");
+        setMostrarFormPrestamo(false);
+        cargarTodo();
+      } catch (e) { 
+        alert("Error al registrar"); 
+      }
+    } else {
+      // Si dice que no, no hace nada y se queda en el formulario
+      console.log("Acción cancelada");
     }
-  } else {
-    // Si el usuario da clic en "No" o "Cancelar", no pasa nada
-    console.log("Desembolso cancelado por el usuario");
-  }
-};
+  };
 
   const confirmarPago = async (id, nombre) => {
     if (window.confirm(`¿Confirmar pago de ${nombre}?`)) {
