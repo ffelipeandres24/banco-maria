@@ -1,15 +1,43 @@
 const express = require('express');
 const router = express.Router();
 const prestamoController = require('../controllers/prestamoController');
+const db = require('../config/db'); // Importamos la DB una sola vez arriba
 
+// --- RUTAS DE PRÉSTAMOS ---
+
+// Mantiene la lógica de tu controlador para crear el préstamo inicial
 router.post('/prestamos', prestamoController.crearPrestamo);
-router.get('/cobros-hoy', prestamoController.obtenerCobrosHoy);
-// Obtener todos los clientes para el selector
 
-// backend/routes/prestamoRoutes.js
+// AJUSTE: Muestra cobros de hoy Y cobros atrasados que no se han pagado
+router.get('/cobros-hoy', async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT 
+                cu.id, 
+                cu.numero_cuota, 
+                cu.monto_cuota, 
+                cu.fecha_vencimiento,
+                cli.nombre, 
+                cli.telefono 
+            FROM cuotas cu
+            JOIN prestamos p ON cu.prestamo_id = p.id
+            JOIN clientes cli ON p.cliente_id = cli.id
+            WHERE cu.estado_pago = 0 
+            AND cu.fecha_vencimiento <= CURDATE() 
+            AND p.estado = 'activo'
+            ORDER BY cu.fecha_vencimiento ASC
+        `);
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- RUTAS DE CLIENTES ---
+
+// Obtener todos los clientes para el selector
 router.get('/clientes', async (req, res) => {
     try {
-        const db = require('../config/db');
         const [rows] = await db.query('SELECT * FROM clientes ORDER BY nombre ASC');
         res.json(rows);
     } catch (err) {
@@ -17,33 +45,9 @@ router.get('/clientes', async (req, res) => {
     }
 });
 
-// Ruta para registrar el pago de una cuota
-router.put('/pagar-cuota/:id', async (req, res) => {
-    const cuotaId = req.params.id;
-    const db = require('../config/db');
-
-    try {
-        // 1. Marcar la cuota como pagada
-        await db.query(
-            'UPDATE cuotas SET estado_pago = 1, fecha_pago_real = CURRENT_TIMESTAMP WHERE id = ?',
-            [cuotaId]
-        );
-
-        // 2. Opcional: Podrías restar el monto del saldo_pendiente en la tabla prestamos aquí
-        // Pero con marcar la cuota ya el sistema sabrá que no debe mostrarla en "cobros-hoy"
-        
-        res.json({ mensaje: "Pago registrado exitosamente" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-
 // Registrar un cliente nuevo
 router.post('/clientes', async (req, res) => {
     const { nombre, cedula, telefono } = req.body;
-    const db = require('../config/db');
-
     try {
         const [result] = await db.query(
             'INSERT INTO clientes (nombre, cedula, telefono) VALUES (?, ?, ?)',
@@ -59,47 +63,70 @@ router.post('/clientes', async (req, res) => {
     }
 });
 
-
-
-
-// EDITAR CLIENTE
+// Editar cliente
 router.put('/clientes/:id', async (req, res) => {
     const { nombre, cedula, telefono } = req.body;
     try {
-        const db = require('../config/db');
-        await db.query('UPDATE clientes SET nombre=?, cedula=?, telefono=? WHERE id=?', [nombre, cedula, telefono, req.params.id]);
+        await db.query('UPDATE clientes SET nombre=?, cedula=?, telefono=? WHERE id=?', 
+        [nombre, cedula, telefono, req.params.id]);
         res.json({ mensaje: "Cliente actualizado" });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ELIMINAR CLIENTE
+// Eliminar cliente
 router.delete('/clientes/:id', async (req, res) => {
     try {
-        const db = require('../config/db');
         await db.query('DELETE FROM clientes WHERE id = ?', [req.params.id]);
         res.json({ mensaje: "Cliente eliminado" });
-    } catch (err) { res.status(500).json({ error: "No se puede eliminar un cliente con préstamos activos" }); }
+    } catch (err) { 
+        res.status(500).json({ error: "No se puede eliminar un cliente con préstamos activos" }); 
+    }
 });
 
-// 1. CARTERA COMPLETA CON FECHA DE PRESTAMO
-// backend/routes/prestamoRoutes.js
+// --- GESTIÓN DE PAGOS Y CARTERA ---
 
+// Registrar el pago de una cuota
+router.put('/pagar-cuota/:id', async (req, res) => {
+    const cuotaId = req.params.id;
+    try {
+        // 1. Marcar la cuota como pagada
+        await db.query(
+            'UPDATE cuotas SET estado_pago = 1, fecha_pago_real = CURRENT_TIMESTAMP WHERE id = ?',
+            [cuotaId]
+        );
+
+        // 2. Actualizar el saldo pendiente del préstamo automáticamente
+        await db.query(`
+            UPDATE prestamos p
+            SET p.saldo_pendiente = p.saldo_pendiente - (
+                SELECT monto_cuota FROM cuotas WHERE id = ?
+            )
+            WHERE p.id = (SELECT prestamo_id FROM cuotas WHERE id = ?)
+        `, [cuotaId, cuotaId]);
+        
+        res.json({ mensaje: "Pago registrado exitosamente" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Cartera completa (Vista de deudores)
 router.get('/cartera', async (req, res) => {
     try {
-        const db = require('../config/db');
         const [rows] = await db.query(`
             SELECT 
                 c.id, 
                 c.nombre, 
                 c.cedula, 
                 c.telefono, 
-                MAX(p.fecha_inicio) as fecha_prestamo, -- Usamos MAX para traer la fecha del último préstamo
-                (SELECT SUM(saldo_pendiente) FROM prestamos WHERE cliente_id = c.id AND estado = 'activo') as total_prestado,
-                (SELECT COUNT(*) FROM cuotas cu JOIN prestamos p2 ON cu.prestamo_id = p2.id 
-                 WHERE p2.cliente_id = c.id AND cu.estado_pago = 0 AND p2.estado = 'activo') as cuotas_faltantes
+                MAX(p.fecha_inicio) as fecha_prestamo,
+                IFNULL(SUM(p.saldo_pendiente), 0) as total_prestado,
+                COUNT(CASE WHEN cu.estado_pago = 0 THEN 1 END) as cuotas_faltantes
             FROM clientes c
             LEFT JOIN prestamos p ON p.cliente_id = c.id AND p.estado = 'activo'
-            GROUP BY c.id, c.nombre, c.cedula, c.telefono -- Agregamos todas las columnas al GROUP BY
+            LEFT JOIN cuotas cu ON cu.prestamo_id = p.id
+            GROUP BY c.id, c.nombre, c.cedula, c.telefono
+            ORDER BY c.nombre ASC
         `);
         res.json(rows);
     } catch (err) { 
@@ -107,10 +134,9 @@ router.get('/cartera', async (req, res) => {
     }
 });
 
-// 2. HISTORIAL DE PAGOS DE UN CLIENTE
+// Historial de pagos realizados por un cliente
 router.get('/historial/:cliente_id', async (req, res) => {
     try {
-        const db = require('../config/db');
         const [rows] = await db.query(`
             SELECT cu.numero_cuota, cu.monto_cuota, cu.fecha_pago_real 
             FROM cuotas cu 
@@ -121,4 +147,5 @@ router.get('/historial/:cliente_id', async (req, res) => {
         res.json(rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
+
 module.exports = router;
