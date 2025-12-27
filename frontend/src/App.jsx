@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, X, MessageCircle, CheckCircle2, 
   Bell, UserPlus, ArrowLeft, Users, Trash2, Edit3, Calendar, 
-  History, TrendingDown, Wallet 
+  History, TrendingDown, Wallet, Sparkles 
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -111,6 +111,7 @@ const TarjetaCliente = ({ cli, verHistorial, alEditar, alEliminar, expandido, hi
 function App() {
   const [vista, setVista] = useState('inicio'); 
   const [mostrarFormPrestamo, setMostrarFormPrestamo] = useState(false);
+  const [bienvenida, setBienvenida] = useState(true); // Modal de saludo inicial
   const [editandoCli, setEditandoCli] = useState(null);
   const [clienteExpandido, setClienteExpandido] = useState(null);
   const [clientes, setClientes] = useState([]);
@@ -199,6 +200,34 @@ function App() {
 
   return (
     <div className="min-h-screen bg-fondo text-white p-6 font-sans pb-32">
+      
+      {/* MODAL DE BIENVENIDA LEGENDARIO */}
+      <AnimatePresence>
+        {bienvenida && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-2xl"
+          >
+            <motion.div 
+              initial={{ scale: 0.8, y: 20 }} animate={{ scale: 1, y: 0 }}
+              className="bg-slate-900 border border-primario/30 p-10 rounded-[3.5rem] text-center shadow-[0_0_50px_rgba(var(--primario-rgb),0.2)] max-w-xs w-full"
+            >
+              <div className="bg-primario/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 border border-primario/20">
+                <Sparkles className="text-primario" size={40} />
+              </div>
+              <h2 className="text-4xl font-black italic tracking-tighter mb-2">¡Hola Maria!</h2>
+              <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mb-8">Tu banco está listo</p>
+              <button 
+                onClick={() => setBienvenida(false)}
+                className="w-full bg-primario text-black py-5 rounded-3xl font-black text-lg shadow-xl shadow-primario/20 active:scale-95 transition-all"
+              >
+                ENTRAR
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* HEADER TIPO IPHONE */}
       <header className="max-w-md mx-auto flex justify-between items-center mb-10 sticky top-0 py-4 bg-fondo/80 backdrop-blur-md z-40">
         <div>
@@ -224,7 +253,7 @@ function App() {
                 <TrendingDown className="absolute right-8 bottom-8 text-primario/10" size={80} />
               </div>
 
-              <div className="flex justify-between items-end mb-8">
+              <div className="flex justify-between items-end mb-8 px-2">
                 <h2 className="text-2xl font-black italic uppercase text-white/90 leading-none">Agenda de Cobro</h2>
                 <button 
                   onClick={() => setMostrarFormPrestamo(true)} 
@@ -277,12 +306,12 @@ function App() {
           {/* VISTA: REGISTRO CLIENTE */}
           {vista === 'registrar' && (
             <motion.div key="reg" initial={{ x: 100, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -100, opacity: 0 }}>
-              <div className="flex items-center gap-4 mb-10">
+              <div className="flex items-center gap-4 mb-10 px-2">
                 <button onClick={() => setVista('cartera')} className="bg-slate-800 p-4 rounded-2xl text-primario shadow-lg"><ArrowLeft/></button>
                 <h2 className="text-2xl font-black italic uppercase text-white tracking-tighter">{editandoCli ? 'Actualizar' : 'Nuevo'} Deudor</h2>
               </div>
               
-              <form onSubmit={guardarCliente} className="bg-slate-800/80 p-9 rounded-[3.5rem] border border-slate-700/50 space-y-7 shadow-2xl backdrop-blur-xl">
+              <form onSubmit={guardarCliente} className="bg-slate-800/80 p-9 rounded-[3.5rem] border border-slate-700/50 space-y-7 shadow-2xl backdrop-blur-xl mx-2">
                 <div className="space-y-1">
                     <label className="text-[10px] font-black text-slate-500 uppercase ml-2 tracking-widest">Nombre Completo</label>
                     <input type="text" placeholder="..." required className="w-full bg-slate-900/50 border-2 border-slate-700 p-5 rounded-2xl focus:border-primario outline-none transition-all font-bold text-white" value={nuevoCli.nombre} onChange={(e)=>setNuevoCli({...nuevoCli, nombre:e.target.value})} />
@@ -304,90 +333,69 @@ function App() {
 
         </AnimatePresence>
 
-        {/* MODAL PRÉSTAMO LEGENDARIO */}
+        {/* MODAL PRÉSTAMO OPTIMIZADO PARA MÓVIL */}
         <AnimatePresence>
           {mostrarFormPrestamo && (
             <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 z-50"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+              className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-end justify-center z-50"
             >
               <div className="absolute inset-0" onClick={() => setMostrarFormPrestamo(false)} />
-
               <motion.div 
-                initial={{ y: "100%" }} 
-                animate={{ y: 0 }} 
-                exit={{ y: "100%" }}
+                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="relative bg-slate-900 w-full max-w-md p-9 rounded-t-[3.5rem] sm:rounded-[3.5rem] border-t border-x border-primario/30 shadow-[0_-20px_50px_-20px_rgba(var(--primario-rgb),0.3)]"
+                className="relative bg-slate-900 w-full max-w-md p-6 pb-12 rounded-t-[3.5rem] border-t border-primario/30 shadow-2xl"
               >
-                <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-8 opacity-50" />
-
-                <div className="flex justify-between items-center mb-10">
+                <div className="w-12 h-1.5 bg-slate-800 rounded-full mx-auto mb-8" />
+                <div className="flex justify-between items-start mb-8 px-4">
                   <div>
                     <h3 className="text-3xl font-black uppercase italic tracking-tighter text-white">Desembolso</h3>
-                    <p className="text-[10px] text-primario font-bold uppercase tracking-[0.3em]">Cálculo de Capital</p>
+                    <p className="text-[10px] text-primario font-bold uppercase tracking-[0.2em]">Cálculo de Capital</p>
                   </div>
-                  <button onClick={() => setMostrarFormPrestamo(false)} className="bg-slate-800 p-3 rounded-full text-slate-400 hover:text-white transition-colors">
-                    <X size={24}/>
+                  <button onClick={() => setMostrarFormPrestamo(false)} className="bg-slate-800 p-3 rounded-full text-white">
+                    <X size={20}/>
                   </button>
                 </div>
-
-                <form onSubmit={guardarPrestamo} className="space-y-6">
-                  
+                <form onSubmit={guardarPrestamo} className="space-y-6 px-4">
                   <div className="relative">
                     <label className="absolute -top-2 left-4 bg-slate-900 px-2 text-[10px] font-bold text-slate-500 uppercase z-10">Seleccionar Deudor</label>
-                    <select 
-                      required 
-                      className="w-full bg-slate-800/50 border-2 border-slate-700 p-5 rounded-2xl font-bold text-white focus:border-primario outline-none transition-all appearance-none"
-                      onChange={(e)=>setFormData({...formData, cliente_id:e.target.value})}
-                    >
+                    <select required className="w-full bg-slate-800/40 border-2 border-slate-700 p-4 rounded-2xl font-bold text-white focus:border-primario outline-none appearance-none" onChange={(e)=>setFormData({...formData, cliente_id:e.target.value})}>
                       <option value="">Buscar en cartera...</option>
-                      {clientes.map(c => <option key={c.id} value={c.id} className="bg-slate-900">{c.nombre}</option>)}
+                      {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                     </select>
                   </div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div className="relative">
                       <label className="absolute -top-2 left-4 bg-slate-900 px-2 text-[10px] font-bold text-slate-500 uppercase z-10">Fecha</label>
-                      <input type="date" required className="w-full bg-slate-800/50 border-2 border-slate-700 p-5 rounded-2xl font-bold text-white outline-none" value={formData.fecha_inicio} onChange={(e)=>setFormData({...formData, fecha_inicio:e.target.value})} />
+                      <input type="date" required className="w-full bg-slate-800/40 border-2 border-slate-700 p-4 rounded-2xl font-bold text-white outline-none" value={formData.fecha_inicio} onChange={(e)=>setFormData({...formData, fecha_inicio:e.target.value})} />
                     </div>
                     <div className="relative">
                       <label className="absolute -top-2 left-4 bg-slate-900 px-2 text-[10px] font-bold text-slate-500 uppercase z-10">Cuotas</label>
-                      <input type="number" placeholder="0" required className="w-full bg-slate-800/50 border-2 border-slate-700 p-5 rounded-2xl font-black text-center text-white focus:border-primario outline-none" onChange={(e)=>setFormData({...formData, cuotas_totales:e.target.value})} />
+                      <input type="number" placeholder="0" required className="w-full bg-slate-800/40 border-2 border-slate-700 p-4 rounded-2xl font-black text-center text-white focus:border-primario outline-none" onChange={(e)=>setFormData({...formData, cuotas_totales:e.target.value})} />
                     </div>
                   </div>
-
-                  <div className="relative group">
+                  <div className="relative">
                     <label className="absolute -top-2 left-4 bg-slate-900 px-2 text-[10px] font-bold text-slate-500 uppercase z-10">Monto Principal</label>
-                    <div className="flex items-center bg-slate-800/80 border-2 border-slate-700 rounded-[2rem] p-3 focus-within:border-primario transition-all">
-                      <span className="pl-4 text-4xl font-black text-primario">$</span>
-                      <input type="number" placeholder="0" required className="w-full bg-transparent p-4 text-5xl font-black text-white outline-none" onChange={(e)=>setFormData({...formData, monto_prestado:e.target.value})} />
+                    <div className="flex items-center bg-slate-800/40 border-2 border-slate-700 rounded-[2rem] p-2 focus-within:border-primario transition-all">
+                      <span className="pl-4 text-3xl font-black text-primario">$</span>
+                      <input type="number" placeholder="0" required className="w-full bg-transparent p-4 text-4xl font-black text-white outline-none" onChange={(e)=>setFormData({...formData, monto_prestado:e.target.value})} />
                     </div>
                   </div>
-
                   {formData.monto_prestado > 0 && (
-                    <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-primario/5 border border-primario/20 p-6 rounded-[2.5rem] flex justify-between items-center">
-                      <div>
-                        <p className="text-[10px] font-black text-primario/60 uppercase mb-1">Total a Devolver</p>
-                        <p className="text-3xl font-black text-white">${totalAPagar.toLocaleString()}</p>
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-primario/10 border border-primario/20 p-6 rounded-[2.5rem]">
+                      <div className="flex justify-between items-center mb-3 pb-3 border-b border-primario/10">
+                        <p className="text-[10px] font-black text-primario/60 uppercase tracking-widest">Total a Devolver</p>
+                        <p className="text-2xl font-black text-white">${totalAPagar.toLocaleString()}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-black text-primario/60 uppercase mb-1">Cuota (8d)</p>
-                        <p className="text-3xl font-black text-primario">${valorCuota.toLocaleString()}</p>
+                      <div className="flex justify-between items-center">
+                        <p className="text-[10px] font-black text-primario/60 uppercase tracking-widest">Cuota (8d)</p>
+                        <p className="text-2xl font-black text-primario">${valorCuota.toLocaleString()}</p>
                       </div>
                     </motion.div>
                   )}
-
-                  <motion.button 
-                    whileTap={{ scale: 0.95 }}
-                    type="submit" 
-                    className="w-full bg-primario text-black py-7 rounded-[2.8rem] font-black text-2xl shadow-2xl flex items-center justify-center gap-4 active:brightness-90 transition-all"
-                  >
-                    <Wallet size={32} />
-                    DAR DINERO
-                  </motion.button>
+                  <button type="submit" className="w-full bg-primario text-black py-6 rounded-[2.5rem] font-black text-xl shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                    <Wallet size={24} /> DAR DINERO
+                  </button>
                 </form>
               </motion.div>
             </motion.div>
