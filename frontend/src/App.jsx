@@ -144,25 +144,15 @@ function App() {
     }
   };
 
- const guardarPrestamo = async (e) => {
+  const guardarPrestamo = async (e) => {
     e.preventDefault();
-
-    // Esta es la alerta que pediste
-    const confirmar = window.confirm("¿Seguro que quieres hacer el préstamo?");
-    
-    if (confirmar) {
-      try {
-        await axios.post('https://banco-maria.onrender.com/api/prestamos', formData);
-        alert("¡Préstamo desembolsado!");
-        setMostrarFormPrestamo(false);
-        cargarTodo();
-      } catch (e) { 
-        alert("Error al registrar"); 
-      }
-    } else {
-      // Si dice que no, no hace nada y se queda en el formulario
-      console.log("Acción cancelada");
-    }
+       const confirmar = window.confirm("¿Seguro que quieres hacer el préstamo?");
+    try {
+      await axios.post(`${API_URL}/prestamos`, formData);
+      alert("¡Préstamo desembolsado!");
+      setMostrarFormPrestamo(false);
+      cargarTodo();
+    } catch (e) { alert("Error al registrar"); }
   };
 
   const confirmarPago = async (id, nombre) => {
