@@ -246,26 +246,129 @@ function App() {
 
         </AnimatePresence>
 
-        {/* MODAL PRÉSTAMO */}
-        <AnimatePresence>
-          {mostrarFormPrestamo && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/95 backdrop-blur-xl flex items-end justify-center p-4 z-50">
-              <motion.div initial={{ y: 200 }} animate={{ y: 0 }} className="bg-slate-900 w-full max-w-md p-8 rounded-t-[4rem] border-t border-primario/40">
-                <div className="flex justify-between mb-8"><h3 className="text-2xl font-black italic">Nuevo Préstamo</h3><button onClick={()=>setMostrarFormPrestamo(false)}><X/></button></div>
-                <form onSubmit={guardarPrestamo} className="space-y-5">
-                  <select required className="w-full bg-slate-800 p-4 rounded-2xl font-bold" onChange={(e)=>setFormData({...formData, cliente_id:e.target.value})}>
-                    <option value="">Seleccionar Cliente...</option>
-                    {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                  </select>
-                  <input type="date" required className="w-full bg-slate-800 p-4 rounded-2xl font-bold" value={formData.fecha_inicio} onChange={(e)=>setFormData({...formData, fecha_inicio:e.target.value})} />
-                  <input type="number" placeholder="Monto" required className="w-full bg-slate-800 p-4 rounded-2xl text-2xl font-black text-primario" onChange={(e)=>setFormData({...formData, monto_prestado:e.target.value})} />
-                  <input type="number" placeholder="Cuotas" required className="w-full bg-slate-800 p-4 rounded-2xl font-black text-center" onChange={(e)=>setFormData({...formData, cuotas_totales:e.target.value})} />
-                  <button type="submit" className="w-full bg-primario text-black py-5 rounded-[2.5rem] font-black text-xl">DESEMBOLSAR</button>
-                </form>
-              </motion.div>
+        {/* MODAL PRÉSTAMO LEGENDARIO */}
+<AnimatePresence>
+  {mostrarFormPrestamo && (
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }} 
+      className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 z-50"
+    >
+      {/* Overlay para cerrar al tocar fuera */}
+      <div className="absolute inset-0" onClick={() => setMostrarFormPrestamo(false)} />
+
+      <motion.div 
+        initial={{ y: "100%" }} 
+        animate={{ y: 0 }} 
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className="relative bg-slate-900 w-full max-w-md p-8 rounded-t-[3rem] sm:rounded-[3rem] border-t border-x border-primario/30 shadow-[0_-20px_50px_-20px_rgba(var(--primario-rgb),0.3)]"
+      >
+        {/* Indicador de arrastre para iPhone */}
+        <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-6 opacity-50" />
+
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h3 className="text-3xl font-black uppercase italic tracking-tighter text-white">Nuevo Préstamo</h3>
+            <p className="text-[10px] text-primario font-bold uppercase tracking-[0.2em]">Configuración de Desembolso</p>
+          </div>
+          <button 
+            onClick={() => setMostrarFormPrestamo(false)}
+            className="bg-slate-800 p-3 rounded-full text-slate-400 hover:text-white transition-colors"
+          >
+            <X size={24}/>
+          </button>
+        </div>
+
+        <form onSubmit={guardarPrestamo} className="space-y-6">
+          
+          {/* Selector de Cliente Estilizado */}
+          <div className="group relative">
+            <label className="absolute -top-2 left-4 bg-slate-900 px-2 text-[10px] font-bold text-slate-500 uppercase z-10">Cliente</label>
+            <select 
+              required 
+              className="w-full bg-slate-800/50 border-2 border-slate-700 p-4 rounded-2xl font-bold text-white focus:border-primario focus:ring-4 focus:ring-primario/10 outline-none transition-all appearance-none"
+              onChange={(e)=>setFormData({...formData, cliente_id:e.target.value})}
+            >
+              <option value="">Seleccionar de la lista...</option>
+              {clientes.map(c => <option key={c.id} value={c.id} className="bg-slate-900">{c.nombre}</option>)}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Input Fecha */}
+            <div className="relative">
+              <label className="absolute -top-2 left-4 bg-slate-900 px-2 text-[10px] font-bold text-slate-500 uppercase z-10">Fecha Inicio</label>
+              <input 
+                type="date" 
+                required 
+                className="w-full bg-slate-800/50 border-2 border-slate-700 p-4 rounded-2xl font-bold text-white focus:border-primario outline-none transition-all"
+                value={formData.fecha_inicio} 
+                onChange={(e)=>setFormData({...formData, fecha_inicio:e.target.value})} 
+              />
+            </div>
+            {/* Input Cuotas */}
+            <div className="relative">
+              <label className="absolute -top-2 left-4 bg-slate-900 px-2 text-[10px] font-bold text-slate-500 uppercase z-10">N° Cuotas</label>
+              <input 
+                type="number" 
+                placeholder="0"
+                required 
+                className="w-full bg-slate-800/50 border-2 border-slate-700 p-4 rounded-2xl font-black text-center text-white focus:border-primario outline-none transition-all"
+                onChange={(e)=>setFormData({...formData, cuotas_totales:e.target.value})} 
+              />
+            </div>
+          </div>
+
+          {/* Input Monto Principal */}
+          <div className="relative group">
+            <label className="absolute -top-2 left-4 bg-slate-900 px-2 text-[10px] font-bold text-slate-500 uppercase z-10">Monto a Prestar</label>
+            <div className="flex items-center bg-slate-800/80 border-2 border-slate-700 rounded-3xl p-2 focus-within:border-primario focus-within:ring-4 focus-within:ring-primario/10 transition-all">
+              <span className="pl-4 text-3xl font-black text-primario">$</span>
+              <input 
+                type="number" 
+                placeholder="0.00" 
+                required 
+                className="w-full bg-transparent p-4 text-4xl font-black text-white outline-none placeholder:text-slate-700"
+                onChange={(e)=>setFormData({...formData, monto_prestado:e.target.value})} 
+              />
+            </div>
+          </div>
+
+          {/* Resumen de Cálculo Dinámico */}
+          {formData.monto_prestado > 0 && (
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-primario/5 border border-primario/20 p-5 rounded-[2rem] flex justify-between items-center"
+            >
+              <div>
+                <p className="text-[10px] font-black text-primario/60 uppercase tracking-widest">Total con +20%</p>
+                <p className="text-2xl font-black text-white">${totalAPagar.toLocaleString()}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-black text-primario/60 uppercase tracking-widest">Cuota Estimada</p>
+                <p className="text-2xl font-black text-primario">${valorCuota.toLocaleString()}</p>
+              </div>
             </motion.div>
           )}
-        </AnimatePresence>
+
+          {/* Botón de Acción Legendario */}
+          <motion.button 
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            type="submit" 
+            className="w-full bg-primario text-black py-6 rounded-[2.5rem] font-black text-2xl shadow-[0_20px_40px_-15px_rgba(var(--primario-rgb),0.5)] flex items-center justify-center gap-3 active:brightness-90 transition-all"
+          >
+            <Wallet size={28} />
+            DESEMBOLSAR
+          </motion.button>
+        </form>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
       </main>
     </div>
   );
