@@ -111,6 +111,7 @@ router.put('/pagar-cuota/:id', async (req, res) => {
 });
 
 // Cartera completa (Vista de deudores)
+// RUTA DE CARTERA CORREGIDA
 router.get('/cartera', async (req, res) => {
     try {
         const [rows] = await db.query(`
@@ -120,11 +121,14 @@ router.get('/cartera', async (req, res) => {
                 c.cedula, 
                 c.telefono, 
                 MAX(p.fecha_inicio) as fecha_prestamo,
-                IFNULL(SUM(p.saldo_pendiente), 0) as total_prestado,
-                COUNT(CASE WHEN cu.estado_pago = 0 THEN 1 END) as cuotas_faltantes
+                -- Ajuste: Usamos una subconsulta para que el saldo no se multiplique
+                IFNULL((SELECT SUM(saldo_pendiente) FROM prestamos WHERE cliente_id = c.id AND estado = 'activo'), 0) as total_prestado,
+                -- Ajuste: Contamos las cuotas sin que afecten la suma del dinero
+                (SELECT COUNT(*) FROM cuotas cu2 
+                 JOIN prestamos p2 ON cu2.prestamo_id = p2.id 
+                 WHERE p2.cliente_id = c.id AND cu2.estado_pago = 0 AND p2.estado = 'activo') as cuotas_faltantes
             FROM clientes c
             LEFT JOIN prestamos p ON p.cliente_id = c.id AND p.estado = 'activo'
-            LEFT JOIN cuotas cu ON cu.prestamo_id = p.id
             GROUP BY c.id, c.nombre, c.cedula, c.telefono
             ORDER BY c.nombre ASC
         `);
